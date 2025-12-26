@@ -54,7 +54,7 @@ public class MedicationEntity extends PanacheEntityBase {
     @Builder.Default
     private boolean active = true;
 
-    @OneToMany(mappedBy = "medication", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
+    @OneToMany(mappedBy = "medication", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     @Builder.Default
     @ToString.Exclude //exclui listas do ToString
     private List<MedicationScheduleEntity> schedules = new ArrayList<>();

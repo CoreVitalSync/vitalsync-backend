@@ -49,3 +49,6 @@ nb-configuration.xml
 jwt/
 *.pem
 *.key
+
+# Documentação gerada
+GEMINI.md

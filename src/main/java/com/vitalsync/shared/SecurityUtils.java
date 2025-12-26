@@ -1,4 +1,4 @@
 package com.vitalsync.shared;
 
-public class security {
+public class SecurityUtils {
 }

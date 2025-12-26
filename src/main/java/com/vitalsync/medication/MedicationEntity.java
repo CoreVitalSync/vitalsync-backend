@@ -27,39 +27,39 @@ public class MedicationEntity extends PanacheEntityBase {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     @EqualsAndHashCode.Include
-    public UUID id;
+    private UUID id;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "patient_id", nullable = false)
     @ToString.Exclude // Evita loop e lazy loading acidental no log
-    public UserEntity patient;
+    private UserEntity patient;
 
     @Column(nullable = false)
-    public String name;
+    private String name;
 
     @Column(nullable = false)
-    public String dosage;
+    private String dosage;
 
     @Column(columnDefinition = "TEXT")
-    public String instructions;
+    private String instructions;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "frequency_type")
-    public MedicationFrequency frequencyType;
+    private MedicationFrequency frequencyType;
 
     @Column(name = "start_date")
-    public LocalDate startDate;
+    private LocalDate startDate;
 
     @Column(nullable = false)
     @Builder.Default
-    public boolean active = true;
+    private boolean active = true;
 
     @OneToMany(mappedBy = "medication", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
     @Builder.Default
     @ToString.Exclude //exclui listas do ToString
-    public List<MedicationScheduleEntity> schedules = new ArrayList<>();
+    private List<MedicationScheduleEntity> schedules = new ArrayList<>();
 
     @CreationTimestamp
     @Column(name = "created_at")
-    public LocalDateTime createdAt;
+    private LocalDateTime createdAt;
 }

@@ -21,13 +21,13 @@ public class MedicationScheduleEntity extends PanacheEntityBase {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     @EqualsAndHashCode.Include
-    public UUID id;
+    private UUID id;
 
     @ManyToOne
     @JoinColumn(name = "medication_id", nullable = false)
     @ToString.Exclude
-    public MedicationEntity medication;
+    private MedicationEntity medication;
 
     @Column(name = "scheduled_time", nullable = false)
-    public LocalTime scheduledTime;
+    private LocalTime scheduledTime;
 }

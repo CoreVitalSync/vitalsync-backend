@@ -23,23 +23,23 @@ public class MedicationLogEntity extends PanacheEntityBase {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     @EqualsAndHashCode.Include
-    public UUID id;
+    private UUID id;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "medication_id", nullable = false)
     @ToString.Exclude
-    public MedicationEntity medication;
+    private MedicationEntity medication;
 
     @Column(name = "expected_at", nullable = false)
-    public LocalDateTime expectedAt;
+    private LocalDateTime expectedAt;
 
     @Column(name = "taken_at")
-    public LocalDateTime takenAt;
+    private LocalDateTime takenAt;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    public LogStatus status;
+    private LogStatus status;
 
     @CreationTimestamp
-    public LocalDateTime createdAt;
+    private LocalDateTime createdAt;
 }

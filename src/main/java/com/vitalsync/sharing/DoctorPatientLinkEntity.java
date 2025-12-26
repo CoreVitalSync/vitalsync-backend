@@ -24,29 +24,29 @@ public class DoctorPatientLinkEntity extends PanacheEntityBase {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     @EqualsAndHashCode.Include
-    public UUID id;
+    private UUID id;
 
     @ManyToOne
     @JoinColumn(name = "patient_id", nullable = false)
     @ToString.Exclude
-    public UserEntity patient;
+    private UserEntity patient;
 
     @ManyToOne
     @JoinColumn(name = "doctor_id")
     @ToString.Exclude
-    public UserEntity doctor;
+    private UserEntity doctor;
 
     @Column(name = "invite_token", unique = true)
-    public String inviteToken;
+    private String inviteToken;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    public LinkStatus status;
+    private LinkStatus status;
 
     @CreationTimestamp
     @Column(name = "created_at")
-    public LocalDateTime createdAt;
+    private LocalDateTime createdAt;
     
     @Column(name = "linked_at")
-    public LocalDateTime linkedAt;
+    private LocalDateTime linkedAt;
 }

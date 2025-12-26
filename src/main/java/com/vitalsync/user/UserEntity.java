@@ -25,29 +25,29 @@ public class UserEntity extends PanacheEntityBase {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     @EqualsAndHashCode.Include // Apenas o ID define igualdade
-    public UUID id;
+    private UUID id;
 
     @Column(name = "full_name", nullable = false)
-    public String fullName;
+    private String fullName;
 
     @Column(nullable = false, unique = true)
-    public String email;
+    private String email;
 
     @Column(name = "password_hash", nullable = false)
-    public String passwordHash;
+    private String passwordHash;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    public Role role;
+    private Role role;
 
     @Column(name = "birth_date")
-    public LocalDate birthDate;
+    private LocalDate birthDate;
 
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)
-    public LocalDateTime createdAt;
+    private LocalDateTime createdAt;
 
     @UpdateTimestamp
     @Column(name = "updated_at")
-    public LocalDateTime updatedAt;
+    private LocalDateTime updatedAt;
 }

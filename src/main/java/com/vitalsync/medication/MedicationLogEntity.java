@@ -13,10 +13,6 @@ import java.util.UUID;
 @Table(name = "medication_logs")
 @Getter
 @Setter
-@ToString
-@Builder
-@NoArgsConstructor
-@AllArgsConstructor
 @EqualsAndHashCode(onlyExplicitlyIncluded = true, callSuper = false)
 public class MedicationLogEntity extends PanacheEntityBase {
 

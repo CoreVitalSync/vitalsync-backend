@@ -3,7 +3,7 @@ package com.vitalsync.user;
 import com.vitalsync.shared.enums.Role;
 import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
 import jakarta.persistence.*;
-import lombok.*; // Importa tudo individualmente para substituir o @Data
+import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
@@ -15,10 +15,6 @@ import java.util.UUID;
 @Table(name = "users")
 @Getter
 @Setter
-@ToString
-@Builder
-@NoArgsConstructor
-@AllArgsConstructor
 @EqualsAndHashCode(onlyExplicitlyIncluded = true, callSuper = false) 
 public class UserEntity extends PanacheEntityBase {
 

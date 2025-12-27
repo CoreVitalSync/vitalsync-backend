@@ -14,10 +14,6 @@ import java.util.UUID;
 @Table(name = "vital_signs")
 @Getter
 @Setter
-@ToString
-@Builder
-@NoArgsConstructor
-@AllArgsConstructor
 @EqualsAndHashCode(onlyExplicitlyIncluded = true, callSuper = false)
 public class VitalSignEntity extends PanacheEntityBase {
 

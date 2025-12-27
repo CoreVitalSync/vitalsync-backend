@@ -17,9 +17,8 @@ import java.util.UUID;
 @Table(name = "medications")
 @Getter
 @Setter
-@ToString
 @Builder
-@NoArgsConstructor
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
 @EqualsAndHashCode(onlyExplicitlyIncluded = true, callSuper = false)
 public class MedicationEntity extends PanacheEntityBase {

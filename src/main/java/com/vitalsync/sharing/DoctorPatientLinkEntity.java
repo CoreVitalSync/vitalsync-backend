@@ -14,10 +14,6 @@ import java.util.UUID;
 @Table(name = "doctor_patient_links")
 @Getter
 @Setter
-@ToString
-@Builder
-@NoArgsConstructor
-@AllArgsConstructor
 @EqualsAndHashCode(onlyExplicitlyIncluded = true, callSuper = false)
 public class DoctorPatientLinkEntity extends PanacheEntityBase {
 

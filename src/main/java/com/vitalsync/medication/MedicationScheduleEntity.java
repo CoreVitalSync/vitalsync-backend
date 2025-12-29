@@ -3,6 +3,7 @@ package com.vitalsync.medication;
 import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.UuidGenerator;
 
 import java.time.LocalTime;
 import java.util.UUID;
@@ -15,7 +16,7 @@ import java.util.UUID;
 public class MedicationScheduleEntity extends PanacheEntityBase {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
+    @UuidGenerator(style = UuidGenerator.Style.TIME)
     @EqualsAndHashCode.Include
     private UUID id;
 

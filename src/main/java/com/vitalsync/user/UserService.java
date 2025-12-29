@@ -44,16 +44,9 @@ public class UserService {
     public UserResponseTokenDTO login(UserLoginDTO dto) {
         UserEntity user = UserEntity.find("email", dto.email()).firstResult();
 
-        if (user == null) {
+        if (user == null || !BcryptUtil.matches(dto.password(), user.getPasswordHash())) {
             throw new WebApplicationException(
-                    "Usuário não encontrado.",
-                    Response.Status.NOT_FOUND
-            );
-        }
-
-        if (!BcryptUtil.matches(dto.password(), user.getPasswordHash())) {
-            throw new WebApplicationException(
-                    "Senha incorreta.",
+                    "E-mail ou senha inválidos.",
                     Response.Status.UNAUTHORIZED
             );
         }
@@ -62,6 +55,7 @@ public class UserService {
                 .upn(user.getEmail())
                 .subject(String.valueOf(user.getId()))
                 .groups(user.getRole().name())
+                .claim("name", user.getFullName())
                 .expiresIn(Duration.ofHours(24))
                 .sign();
 

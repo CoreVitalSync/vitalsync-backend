@@ -1,9 +1,7 @@
 package com.vitalsync.user;
 
-import com.vitalsync.user.dto.UserLoginDTO;
 import com.vitalsync.user.dto.UserRegistrationDTO;
 import com.vitalsync.user.dto.UserResponseDTO;
-import com.vitalsync.user.dto.UserResponseTokenDTO;
 import jakarta.inject.Inject;
 import jakarta.validation.Valid;
 import jakarta.ws.rs.*;
@@ -25,15 +23,6 @@ public class UserResource {
     public Response register(@Valid UserRegistrationDTO dto) {
         UserResponseDTO createdUser = userService.register(dto);
         return Response.status(Response.Status.CREATED).entity(createdUser).build();
-    }
-
-    @POST
-    @Path("/auth/login")
-    @Operation(summary = "Logar na conta", description = "Faz login na conta do usuário")
-    public Response login(@Valid UserLoginDTO dto) {
-        UserResponseTokenDTO user = userService.login(dto);
-
-        return Response.ok(user).build();
     }
 
 }

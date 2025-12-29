@@ -5,7 +5,6 @@ import com.vitalsync.user.dto.UserRegistrationDTO;
 import com.vitalsync.user.dto.UserResponseDTO;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
-import org.mapstruct.factory.Mappers;
 
 @Mapper
 public interface UserMapper {

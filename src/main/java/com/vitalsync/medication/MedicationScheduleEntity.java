@@ -12,6 +12,9 @@ import java.util.UUID;
 @Table(name = "medication_schedules")
 @Getter
 @Setter
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 @EqualsAndHashCode(onlyExplicitlyIncluded = true, callSuper = false)
 public class MedicationScheduleEntity extends PanacheEntityBase {
 

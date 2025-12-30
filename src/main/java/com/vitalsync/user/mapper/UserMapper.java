@@ -5,8 +5,9 @@ import com.vitalsync.user.dto.UserRegistrationDTO;
 import com.vitalsync.user.dto.UserResponseDTO;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
+import org.mapstruct.MappingConstants;
 
-@Mapper
+@Mapper(componentModel = MappingConstants.ComponentModel.JAKARTA)
 public interface UserMapper {
 
     @Mapping(target = "id", ignore = true)

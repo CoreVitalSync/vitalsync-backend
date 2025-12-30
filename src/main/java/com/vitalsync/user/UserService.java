@@ -11,14 +11,18 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.transaction.Transactional;
 import jakarta.ws.rs.WebApplicationException;
 import jakarta.ws.rs.core.Response;
-import org.mapstruct.factory.Mappers;
 
 import java.time.Duration;
 
 @ApplicationScoped
 public class UserService {
 
-    private final UserMapper mapper = Mappers.getMapper(UserMapper.class);
+    private final UserMapper mapper;
+
+    public UserService(UserMapper mapper) {
+        this.mapper = mapper;
+    }
+
 
     @Transactional
     public UserResponseDTO register(UserRegistrationDTO dto) {

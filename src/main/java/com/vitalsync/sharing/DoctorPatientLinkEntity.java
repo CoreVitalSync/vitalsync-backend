@@ -6,7 +6,6 @@ import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
-import org.hibernate.annotations.UuidGenerator;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
@@ -19,7 +18,6 @@ import java.util.UUID;
 public class DoctorPatientLinkEntity extends PanacheEntityBase {
 
     @Id
-    @UuidGenerator(style = UuidGenerator.Style.TIME)
     @EqualsAndHashCode.Include
     private UUID id;
 
@@ -46,4 +44,15 @@ public class DoctorPatientLinkEntity extends PanacheEntityBase {
     
     @Column(name = "linked_at")
     private LocalDateTime linkedAt;
+
+    @PrePersist
+    protected void generateId() {
+        if (this.id == null) {
+            long timestamp = System.currentTimeMillis();
+            UUID randomUuid = UUID.randomUUID();
+            long msb = (timestamp << 16) | (0x7000L) | (randomUuid.getMostSignificantBits() & 0x0FFFL);
+            long lsb = randomUuid.getLeastSignificantBits();
+            this.id = new UUID(msb, lsb);
+        }
+    }
 }

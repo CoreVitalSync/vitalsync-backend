@@ -6,7 +6,6 @@ import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
-import org.hibernate.annotations.UuidGenerator;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -20,7 +19,6 @@ import java.util.UUID;
 public class UserEntity extends PanacheEntityBase {
 
     @Id
-    @UuidGenerator(style = UuidGenerator.Style.TIME)
     @EqualsAndHashCode.Include // Apenas o ID define igualdade
     private UUID id;
 
@@ -47,4 +45,15 @@ public class UserEntity extends PanacheEntityBase {
     @UpdateTimestamp
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
+
+    @PrePersist
+    protected void generateId() {
+        if (this.id == null) {
+            long timestamp = System.currentTimeMillis();
+            UUID randomUuid = UUID.randomUUID();
+            long msb = (timestamp << 16) | (0x7000L) | (randomUuid.getMostSignificantBits() & 0x0FFFL);
+            long lsb = randomUuid.getLeastSignificantBits();
+            this.id = new UUID(msb, lsb);
+        }
+    }
 }

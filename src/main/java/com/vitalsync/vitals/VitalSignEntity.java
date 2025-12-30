@@ -5,7 +5,6 @@ import com.vitalsync.user.UserEntity;
 import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
 import jakarta.persistence.*;
 import lombok.*;
-import org.hibernate.annotations.UuidGenerator;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -19,7 +18,6 @@ import java.util.UUID;
 public class VitalSignEntity extends PanacheEntityBase {
 
     @Id
-    @UuidGenerator(style = UuidGenerator.Style.TIME)
     @EqualsAndHashCode.Include
     public UUID id;
 
@@ -43,4 +41,15 @@ public class VitalSignEntity extends PanacheEntityBase {
 
     @Column(columnDefinition = "TEXT")
     public String notes;
+
+    @PrePersist
+    protected void generateId() {
+        if (this.id == null) {
+            long timestamp = System.currentTimeMillis();
+            UUID randomUuid = UUID.randomUUID();
+            long msb = (timestamp << 16) | (0x7000L) | (randomUuid.getMostSignificantBits() & 0x0FFFL);
+            long lsb = randomUuid.getLeastSignificantBits();
+            this.id = new UUID(msb, lsb);
+        }
+    }
 }

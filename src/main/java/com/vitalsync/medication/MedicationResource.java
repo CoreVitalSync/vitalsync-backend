@@ -1,5 +1,7 @@
 package com.vitalsync.medication;
 
+import com.vitalsync.medication.dto.ChecklistLogDTO;
+import com.vitalsync.medication.dto.DailyScheduleDTO;
 import com.vitalsync.medication.dto.MedicationRequestDTO;
 import com.vitalsync.medication.dto.MedicationResponseDTO;
 import jakarta.annotation.security.RolesAllowed;
@@ -54,5 +56,21 @@ public class MedicationResource {
     public Response update(@PathParam("id") UUID id, @Valid MedicationRequestDTO dto) {
         MedicationResponseDTO updated = service.update(id, dto);
         return Response.ok(updated).build();
+    }
+
+    @GET
+    @Path("/today")
+    @Operation(summary = "Agenda do Dia", description = "Lista o que deve ser tomado hoje e o status")
+    public Response getDailySchedule() {
+        List<DailyScheduleDTO> schedule = service.getDailySchedule();
+        return Response.ok(schedule).build();
+    }
+
+    @POST
+    @Path("/{id}/log")
+    @Operation(summary = "Marcar como Tomado", description = "Registra que o paciente tomou o medicamento")
+    public Response logIntake(@PathParam("id") UUID id, @Valid ChecklistLogDTO dto) {
+        service.logIntake(id, dto);
+        return Response.status(Response.Status.CREATED).build();
     }
 }

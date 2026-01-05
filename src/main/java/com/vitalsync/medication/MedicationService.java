@@ -1,8 +1,11 @@
 package com.vitalsync.medication;
 
+import com.vitalsync.medication.dto.ChecklistLogDTO;
+import com.vitalsync.medication.dto.DailyScheduleDTO;
 import com.vitalsync.medication.dto.MedicationRequestDTO;
 import com.vitalsync.medication.dto.MedicationResponseDTO;
 import com.vitalsync.medication.mapper.MedicationMapper;
+import com.vitalsync.shared.enums.LogStatus;
 import com.vitalsync.user.UserEntity;
 import org.eclipse.microprofile.jwt.JsonWebToken;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -11,6 +14,9 @@ import jakarta.ws.rs.WebApplicationException;
 import jakarta.ws.rs.core.Response;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -124,5 +130,114 @@ public class MedicationService {
         entity.persist();
 
         return mapper.toResponse(entity);
+    }
+
+    public List<DailyScheduleDTO> getDailySchedule() {
+        String userId = jwt.getSubject();
+        LocalDate today = LocalDate.now();
+
+        // 1. Buscar todas as medicações ativas do usuário
+        List<MedicationEntity> medications = MedicationEntity
+                .find("patient.id = ?1 and active = true", UUID.fromString(userId))
+                .list();
+
+        // 2. Buscar logs de hoje para evitar N+1 queries (performance)
+        LocalDateTime startOfDay = today.atStartOfDay();
+        LocalDateTime endOfDay = today.atTime(LocalTime.MAX);
+
+        // Query: Logs das medicações deste paciente, feitos hoje
+        List<MedicationLogEntity> todaysLogs = MedicationLogEntity
+                .find("medication.patient.id = ?1 and takenAt between ?2 and ?3",
+                        UUID.fromString(userId), startOfDay, endOfDay)
+                .list();
+
+        List<DailyScheduleDTO> dailyList = new ArrayList<>();
+
+        // 3. Cruzamento: Horários Agendados vs Logs Realizados
+        for (MedicationEntity med : medications) {
+            for (MedicationScheduleEntity schedule : med.getSchedules()) {
+
+                // Verifica se existe log para este remédio próximo deste horário
+                // (Lógica simplificada para o MVP: se tem log hoje, conta como tomado)
+                // Num app real, verificaríamos se o log foi feito dentro de uma janela de tempo (ex: +/- 2 horas)
+                boolean taken = todaysLogs.stream()
+                        .anyMatch(log ->
+                                log.getMedication().getId().equals(med.getId()) &&
+                                        isSameTime(log.getExpectedAt(), schedule.getScheduledTime()) // Comparação de hora
+                        );
+
+                dailyList.add(new DailyScheduleDTO(
+                        schedule.getId(),
+                        med.getId(),
+                        med.getName(),
+                        med.getDosage(),
+                        med.getInstructions(),
+                        schedule.getScheduledTime(),
+                        taken ? LogStatus.TAKEN : null, // Se não tomou, manda null (Pendente)
+                        taken
+                ));
+            }
+        }
+
+        // Ordenar por horário (08:00 antes de 20:00)
+        dailyList.sort((a, b) -> a.scheduledTime().compareTo(b.scheduledTime()));
+
+        return dailyList;
+    }
+
+    @Transactional
+    public void logIntake(UUID medicationId, ChecklistLogDTO dto) {
+        String userId = jwt.getSubject();
+
+        // 1. Validar existência e posse
+        MedicationEntity medication = MedicationEntity.findById(medicationId);
+        if (medication == null) {
+            throw new WebApplicationException("Medicamento não encontrado", Response.Status.NOT_FOUND);
+        }
+        if (!medication.getPatient().getId().toString().equals(userId)) {
+            throw new WebApplicationException("Acesso negado", Response.Status.FORBIDDEN);
+        }
+
+        MedicationLogEntity log = new MedicationLogEntity();
+        log.setMedication(medication);
+        log.setTakenAt(dto.takenAt());
+        log.setStatus(dto.status());
+
+
+        // Precisamos definir o expectedAt corretamente.
+        // O Front deve enviar o horário real da tomada.
+        // Para o MVP, vamos procurar qual é o horário agendado mais próximo da hora que ele tomou.
+
+        LocalTime takenTime = dto.takenAt().toLocalTime();
+
+        // Procura o horário agendado mais próximo (Ex: tomou 08:05, o agendado era 08:00)
+        LocalTime closestScheduledTime = findClosestSchedule(medication.getSchedules(), takenTime);
+
+        // Salva a data de hoje com a hora agendada correta
+        log.setExpectedAt(dto.takenAt().toLocalDate().atTime(closestScheduledTime));
+
+        log.persist();
+    }
+
+    private boolean isSameTime(LocalDateTime logExpectedAt, LocalTime scheduleTime) {
+        if (logExpectedAt == null) return false;
+        // Compara apenas Hora e Minuto (ignorando segundos para segurança)
+        LocalTime logTime = logExpectedAt.toLocalTime();
+        return logTime.getHour() == scheduleTime.getHour() &&
+                logTime.getMinute() == scheduleTime.getMinute();
+    }
+
+    private LocalTime findClosestSchedule(List<MedicationScheduleEntity> schedules, LocalTime takenTime) {
+        LocalTime closest = schedules.get(0).getScheduledTime();
+        long minDiff = Math.abs(java.time.Duration.between(takenTime, closest).toMinutes());
+
+        for (MedicationScheduleEntity s : schedules) {
+            long diff = Math.abs(java.time.Duration.between(takenTime, s.getScheduledTime()).toMinutes());
+            if (diff < minDiff) {
+                minDiff = diff;
+                closest = s.getScheduledTime();
+            }
+        }
+        return closest;
     }
 }

@@ -1,9 +1,6 @@
 package com.vitalsync.medication;
 
-import com.vitalsync.medication.dto.ChecklistLogDTO;
-import com.vitalsync.medication.dto.DailyScheduleDTO;
-import com.vitalsync.medication.dto.MedicationRequestDTO;
-import com.vitalsync.medication.dto.MedicationResponseDTO;
+import com.vitalsync.medication.dto.*;
 import com.vitalsync.medication.mapper.MedicationMapper;
 import com.vitalsync.shared.enums.LogStatus;
 import com.vitalsync.sharing.SharingService;
@@ -268,6 +265,89 @@ public class MedicationService {
                 .list();
 
         return mapper.toResponseList(entities);
+    }
+
+    public List<PatientLogHistoryDTO> getPatientLogs(UUID patientId) {
+        String requesterId = jwt.getSubject();
+
+        // Segurança: Se quem pede NÃO é o próprio paciente, verifica se é um médico com acesso
+        if (!requesterId.equals(patientId.toString())) {
+            sharingService.validateDoctorAccess(patientId);
+        }
+
+        // 1. Buscar logs reais (O que foi registrado no banco)
+        List<MedicationLogEntity> realLogs = MedicationLogEntity
+                .find("medication.patient.id = ?1", patientId)
+                .list();
+
+        // 2. Buscar medicamentos (Para calcular o que faltou)
+        // Nota: Filtramos por active=true para não gerar "Missed" de remédios antigos desativados
+        List<MedicationEntity> medications = MedicationEntity
+                .find("patient.id = ?1 and active = true", patientId)
+                .list();
+
+        List<PatientLogHistoryDTO> history = new ArrayList<>();
+
+        // Adiciona os logs reais na lista final
+        for (MedicationLogEntity log : realLogs) {
+            history.add(new PatientLogHistoryDTO(
+                    log.getId(),
+                    log.getMedication().getName(),
+                    log.getMedication().getDosage(),
+                    log.getExpectedAt(),
+                    log.getTakenAt(),
+                    log.getStatus()
+            ));
+        }
+
+        // 3. Gerar logs "Sintéticos" (Missed/Pending) para os últimos 30 dias
+        LocalDate today = LocalDate.now();
+        LocalDate windowStart = today.minusDays(30);
+
+        for (MedicationEntity med : medications) {
+            // Começa a contar da data de início do remédio ou do início da janela (o que for mais recente)
+            LocalDate startDate = med.getStartDate() != null ? med.getStartDate() : windowStart;
+            LocalDate cursor = startDate.isAfter(windowStart) ? startDate : windowStart;
+
+            while (!cursor.isAfter(today)) {
+                if (med.getSchedules() != null) {
+                    for (MedicationScheduleEntity schedule : med.getSchedules()) {
+                        LocalDateTime expectedAt = cursor.atTime(schedule.getScheduledTime());
+
+                        // Verifica se JÁ EXISTE um log real para este dia/horário
+                        boolean exists = false;
+                        for (MedicationLogEntity log : realLogs) {
+                            if (log.getMedication().getId().equals(med.getId()) &&
+                                    log.getExpectedAt().toLocalDate().equals(cursor) &&
+                                    isSameTime(log.getExpectedAt(), schedule.getScheduledTime())) {
+                                exists = true;
+                                break;
+                            }
+                        }
+
+                        // Se não existe log, cria um registro "virtual"
+                        if (!exists) {
+                            LogStatus status = expectedAt.isAfter(LocalDateTime.now()) ? LogStatus.PENDING : LogStatus.MISSED;
+
+                            history.add(new PatientLogHistoryDTO(
+                                    UUID.randomUUID(), // ID temporário para o frontend não quebrar
+                                    med.getName(),
+                                    med.getDosage(),
+                                    expectedAt,
+                                    null, // Não foi tomado
+                                    status
+                            ));
+                        }
+                    }
+                }
+                cursor = cursor.plusDays(1);
+            }
+        }
+
+        // Ordena tudo por data esperada (Crescente)
+        history.sort((a, b) -> a.scheduledTime().compareTo(b.scheduledTime()));
+
+        return history;
     }
 
     private boolean isSameTime(LocalDateTime logExpectedAt, LocalTime scheduleTime) {

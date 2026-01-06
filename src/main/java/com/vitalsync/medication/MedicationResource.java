@@ -1,9 +1,6 @@
 package com.vitalsync.medication;
 
-import com.vitalsync.medication.dto.ChecklistLogDTO;
-import com.vitalsync.medication.dto.DailyScheduleDTO;
-import com.vitalsync.medication.dto.MedicationRequestDTO;
-import com.vitalsync.medication.dto.MedicationResponseDTO;
+import com.vitalsync.medication.dto.*;
 import jakarta.annotation.security.RolesAllowed;
 import jakarta.validation.Valid;
 import jakarta.ws.rs.*;
@@ -89,5 +86,14 @@ public class MedicationResource {
     public Response getPatientMedications(@PathParam("patientId") UUID patientId) {
         List<MedicationResponseDTO> list = service.listByPatientId(patientId);
         return Response.ok(list).build();
+    }
+
+    @GET
+    @Path("/patient/{patientId}/logs")
+    @RolesAllowed({"DOCTOR", "PATIENT"})
+    @Operation(summary = "Histórico de Adesão", description = "Retorna o histórico de tomadas (logs) de um paciente")
+    public Response getPatientLogs(@PathParam("patientId") UUID patientId) {
+        List<PatientLogHistoryDTO> logs = service.getPatientLogs(patientId);
+        return Response.ok(logs).build();
     }
 }

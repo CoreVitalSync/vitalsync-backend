@@ -1,6 +1,7 @@
 package com.vitalsync.sharing;
 
 import com.vitalsync.sharing.dto.AcceptLinkDTO;
+import com.vitalsync.sharing.dto.PatientSummaryDTO;
 import com.vitalsync.sharing.dto.SharingResponseDTO;
 import jakarta.annotation.security.RolesAllowed;
 import jakarta.inject.Inject;
@@ -10,6 +11,8 @@ import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import org.eclipse.microprofile.openapi.annotations.Operation;
 import org.eclipse.microprofile.openapi.annotations.tags.Tag;
+
+import java.util.List;
 
 @Path("/sharing")
 @Produces(MediaType.APPLICATION_JSON)
@@ -40,5 +43,14 @@ public class SharingResource {
     public Response acceptInvite(@Valid AcceptLinkDTO dto) {
         SharingResponseDTO result = service.acceptInvite(dto);
         return Response.ok(result).build();
+    }
+
+    @GET
+    @Path("/my-patients")
+    @RolesAllowed("DOCTOR")
+    @Operation(summary = "Meus Pacientes", description = "Lista os pacientes vinculados ao médico logado")
+    public Response listMyPatients() {
+        List<PatientSummaryDTO> list = service.listMyPatients();
+        return Response.ok(list).build();
     }
 }

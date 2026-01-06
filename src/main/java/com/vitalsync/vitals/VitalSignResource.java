@@ -12,6 +12,7 @@ import org.eclipse.microprofile.openapi.annotations.Operation;
 import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 
 import java.util.List;
+import java.util.UUID;
 
 @Path("/vitals")
 @Produces(MediaType.APPLICATION_JSON)
@@ -38,5 +39,14 @@ public class VitalSignResource {
     public Response listHistory() {
         List<VitalSignResponseDTO> history = service.listMyHistory();
         return Response.ok(history).build();
+    }
+
+    @GET
+    @Path("/patient/{patientId}")
+    @RolesAllowed("DOCTOR")
+    @Operation(summary = "Ver Sinais Vitais do Paciente", description = "Acesso médico ao histórico de sinais vitais")
+    public Response getPatientHistory(@PathParam("patientId") UUID patientId) {
+        List<VitalSignResponseDTO> list = service.listHistoryByPatient(patientId);
+        return Response.ok(list).build();
     }
 }

@@ -73,4 +73,13 @@ public class MedicationResource {
         service.logIntake(id, dto);
         return Response.status(Response.Status.CREATED).build();
     }
+
+    @GET
+    @Path("/patient/{patientId}")
+    @RolesAllowed("DOCTOR") // Só médico acessa essa rota específica
+    @Operation(summary = "Ver Medicação do Paciente", description = "Acesso médico ao histórico de medicamentos")
+    public Response getPatientMedications(@PathParam("patientId") UUID patientId) {
+        List<MedicationResponseDTO> list = service.listByPatientId(patientId);
+        return Response.ok(list).build();
+    }
 }

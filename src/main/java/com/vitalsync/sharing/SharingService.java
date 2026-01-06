@@ -2,6 +2,7 @@ package com.vitalsync.sharing;
 
 import com.vitalsync.shared.enums.LinkStatus;
 import com.vitalsync.sharing.dto.AcceptLinkDTO;
+import com.vitalsync.sharing.dto.PatientSummaryDTO;
 import com.vitalsync.sharing.dto.SharingResponseDTO;
 import com.vitalsync.sharing.mapper.SharingMapper;
 import com.vitalsync.user.UserEntity;
@@ -14,6 +15,7 @@ import jakarta.ws.rs.core.Response;
 import org.eclipse.microprofile.jwt.JsonWebToken;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.UUID;
 
 @ApplicationScoped
@@ -80,5 +82,33 @@ public class SharingService {
         link.setLinkedAt(LocalDateTime.now());
 
         return mapper.toResponse(link);
+    }
+
+    // Lista todos os pacientes vinculados ao médico logado
+    public List<PatientSummaryDTO> listMyPatients() {
+        String doctorId = jwt.getSubject();
+
+        List<DoctorPatientLinkEntity> links = DoctorPatientLinkEntity
+                .find("doctor.id = ?1 and status = 'ACTIVE'", UUID.fromString(doctorId))
+                .list();
+
+        return links.stream()
+                .map(mapper::toPatientSummary)
+                .toList();
+    }
+
+    // --- GUARDRAIL DE SEGURANÇA ---
+    // Verifica se existe vínculo ativo entre Médico X e Paciente Y
+    public void validateDoctorAccess(UUID patientId) {
+        String doctorId = jwt.getSubject();
+
+        long count = DoctorPatientLinkEntity.count(
+                "doctor.id = ?1 and patient.id = ?2 and status = 'ACTIVE'",
+                UUID.fromString(doctorId), patientId
+        );
+
+        if (count == 0) {
+            throw new WebApplicationException("Acesso negado aos dados deste paciente", Response.Status.FORBIDDEN);
+        }
     }
 }

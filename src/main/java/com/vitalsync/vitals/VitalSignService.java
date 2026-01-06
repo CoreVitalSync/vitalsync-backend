@@ -1,5 +1,6 @@
 package com.vitalsync.vitals;
 
+import com.vitalsync.sharing.SharingService;
 import com.vitalsync.user.UserEntity;
 import com.vitalsync.vitals.dto.VitalSignCreateDTO;
 import com.vitalsync.vitals.dto.VitalSignResponseDTO;
@@ -21,10 +22,13 @@ public class VitalSignService {
 
     private final VitalMapper mapper;
     private final JsonWebToken jwt;
+    private final SharingService sharingService;
 
-    public VitalSignService(VitalMapper mapper, JsonWebToken jwt) {
+
+    public VitalSignService(VitalMapper mapper, JsonWebToken jwt, SharingService sharingService) {
         this.mapper = mapper;
         this.jwt = jwt;
+        this.sharingService = sharingService;
     }
 
     @Transactional
@@ -54,6 +58,18 @@ public class VitalSignService {
         // Busca ordenando do mais recente para o mais antigo
         List<VitalSignEntity> list = VitalSignEntity
                 .find("patient.id = ?1 ORDER BY measuredAt DESC", UUID.fromString(userId))
+                .list();
+
+        return mapper.toResponseList(list);
+    }
+
+    public List<VitalSignResponseDTO> listHistoryByPatient(UUID patientId) {
+        // 1. Valida Vínculo
+        sharingService.validateDoctorAccess(patientId);
+
+        // 2. Busca histórico do paciente solicitado
+        List<VitalSignEntity> list = VitalSignEntity
+                .find("patient.id = ?1 ORDER BY measuredAt DESC", patientId)
                 .list();
 
         return mapper.toResponseList(list);

@@ -6,6 +6,7 @@ import com.vitalsync.medication.dto.MedicationRequestDTO;
 import com.vitalsync.medication.dto.MedicationResponseDTO;
 import com.vitalsync.medication.mapper.MedicationMapper;
 import com.vitalsync.shared.enums.LogStatus;
+import com.vitalsync.sharing.SharingService;
 import com.vitalsync.user.UserEntity;
 import org.eclipse.microprofile.jwt.JsonWebToken;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -25,10 +26,12 @@ public class MedicationService {
 
     private final MedicationMapper mapper;
     private final JsonWebToken jwt;
+    private final SharingService sharingService;
 
-    public MedicationService(MedicationMapper mapper, JsonWebToken jwt) {
+    public MedicationService(MedicationMapper mapper, JsonWebToken jwt, SharingService sharingService) {
         this.mapper = mapper;
         this.jwt = jwt;
+        this.sharingService = sharingService;
     }
 
     @Transactional
@@ -217,6 +220,18 @@ public class MedicationService {
         log.setExpectedAt(dto.takenAt().toLocalDate().atTime(closestScheduledTime));
 
         log.persist();
+    }
+
+    public List<MedicationResponseDTO> listByPatientId(UUID patientId) {
+        // 1. O Guardrail verifica se o médico tem permissão
+        sharingService.validateDoctorAccess(patientId);
+
+        // 2. Se passou, busca os dados daquele ID específico
+        List<MedicationEntity> entities = MedicationEntity
+                .find("patient.id = ?1 ORDER BY name", patientId)
+                .list();
+
+        return mapper.toResponseList(entities);
     }
 
     private boolean isSameTime(LocalDateTime logExpectedAt, LocalTime scheduleTime) {

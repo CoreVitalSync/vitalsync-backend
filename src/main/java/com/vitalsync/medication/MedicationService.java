@@ -203,7 +203,7 @@ public class MedicationService {
 
         MedicationLogEntity log = new MedicationLogEntity();
         log.setMedication(medication);
-        log.setTakenAt(dto.takenAt());
+        log.setTakenAt(dto.takenAt().toLocalDateTime());
         log.setStatus(dto.status());
 
 
@@ -214,10 +214,46 @@ public class MedicationService {
         LocalTime takenTime = dto.takenAt().toLocalTime();
 
         // Procura o horário agendado mais próximo (Ex: tomou 08:05, o agendado era 08:00)
+        if (medication.getSchedules() == null || medication.getSchedules().isEmpty()) {
+             // Fallback se não tiver horários: usa a hora da tomada como "esperado"
+             log.setExpectedAt(dto.takenAt().toLocalDateTime());
+        } else {
         LocalTime closestScheduledTime = findClosestSchedule(medication.getSchedules(), takenTime);
 
         // Salva a data de hoje com a hora agendada correta
         log.setExpectedAt(dto.takenAt().toLocalDate().atTime(closestScheduledTime));
+        }
+
+        log.persist();
+    }
+
+    @Transactional
+    public void checkSchedule(UUID scheduleId, ChecklistLogDTO dto) {
+        String userId = jwt.getSubject();
+
+        // 1. Buscar o Agendamento (Schedule) pelo ID que veio do front
+        MedicationScheduleEntity schedule = MedicationScheduleEntity.findById(scheduleId);
+        if (schedule == null) {
+            throw new WebApplicationException("Agendamento não encontrado", Response.Status.NOT_FOUND);
+        }
+
+        // 2. Recuperar o Medicamento através do Agendamento
+        MedicationEntity medication = schedule.getMedication();
+
+        // 3. Validar Segurança (O remédio pertence ao usuário logado?)
+        if (!medication.getPatient().getId().toString().equals(userId)) {
+            throw new WebApplicationException("Acesso negado", Response.Status.FORBIDDEN);
+        }
+
+        // 4. Criar o Log
+        MedicationLogEntity log = new MedicationLogEntity();
+        log.setMedication(medication);
+        log.setTakenAt(dto.takenAt().toLocalDateTime());
+        log.setStatus(dto.status());
+
+        // 5. Definir o Horário Esperado (ExpectedAt)
+        // Usamos a data da tomada (hoje) combinada com a hora exata do agendamento
+        log.setExpectedAt(dto.takenAt().toLocalDate().atTime(schedule.getScheduledTime()));
 
         log.persist();
     }

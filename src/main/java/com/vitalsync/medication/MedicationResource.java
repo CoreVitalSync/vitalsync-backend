@@ -74,6 +74,14 @@ public class MedicationResource {
         return Response.status(Response.Status.CREATED).build();
     }
 
+    @POST
+    @Path("/schedules/{id}/check")
+    @Operation(summary = "Dar Check no Horário", description = "Registra a tomada baseada no ID do agendamento")
+    public Response checkSchedule(@PathParam("id") UUID id, @Valid ChecklistLogDTO dto) {
+        service.checkSchedule(id, dto);
+        return Response.status(Response.Status.CREATED).build();
+    }
+
     @GET
     @Path("/patient/{patientId}")
     @RolesAllowed("DOCTOR") // Só médico acessa essa rota específica
